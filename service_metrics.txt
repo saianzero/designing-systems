@@ -1,0 +1,38 @@
+SLA,SLO,SLI - RPO, RTO
+
+
+SLA - Service Level Agreement
+Agreement with client
+
+(99% requests return in 5ms)
+
+SLO - Service Level Objective
+Team objectives to aim for
+
+(99.5% requests return in 5ms)
+
+SLI  - Service Level Indicator
+Actual reality
+Measures latency
+
+
+RTO and RPO
+
+Recovery Point Objective
+How much data can we afford to lose?
+Backup<——>Disaster
+
+Recovery Time Objective (Accepted Tolerable downtime)
+How quicky can we recover our services post disaster?
+
+RPO, RTO inversely proportional to Costs for setting up reqd. infra
+
+
+RPO <= RTO
+Example
+Suppose your payment database crashes at 2:00 PM.
+* RPO = 15 minutes → You can tolerate losing at most 15 minutes of data.
+* RTO = 1 hour → The system must be back online within 1 hour.
+So:
+2:00 PM failure→ Restore data from 1:45 PM or later→ System must be operational by 3:00 PM
+

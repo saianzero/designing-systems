@@ -1,0 +1,18 @@
+Proxy
+
+* Forward proxy: Client → Proxy → Internet/backend
+    * Proxy represents the client.
+    * Example: corporate proxy filtering employees' web requests.
+
+
+* Reverse proxy: Client → Proxy → Backend servers
+    * Proxy represents the backend/server.
+    * Examples: Nginx, HAProxy, API Gateway.
+    * Can do caching, logging, TLS termination, compression, load balancing, request batching, etc.
+    * Filter requests
+    * Log requests
+    * Transform requests (encryption, compression, etc)
+    * Cache
+    * Batch requests
+        * Collapsed forwarding: enable multiple client requests for the same URI to be processed as one request to the backend server
+        * Collapse requests for data that is spatially close together in the storage to minimize the reads

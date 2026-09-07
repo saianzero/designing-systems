@@ -1,0 +1,50 @@
+BACK-OF-THE-ENVELOPE CALCULATIONS
+
+APPROX ESTIMATIONS
+
+24H * 6M * 60S = 86,400s == 1,00,000s in a day
+
+1 char = 1 byte
+1 int = 4 bytes
+
+i.e., say UUID is 64 chars -> 64 bytes
+
+1 Byte = 8 bits
+
+1KB=1000Bytes -> MB -> GB -> TB -> PB
+
+
+
+Operation name	Time
+L1 cache reference	0.5 ns
+Branch mispredict	5 ns
+L2 cache reference	7 ns
+Mutex lock/unlock	100 ns
+Main memory reference	100 ns
+Compress 1K bytes with Zippy	10,000 ns = 10 µs
+Send 2K bytes over 1 Gbps network	20,000 ns = 20 µs
+Read 1 MB sequentially from memory	250,000 ns = 250 µs
+Round trip within the same datacenter	500,000 ns = 500 µs
+Disk seek	10,000,000 ns = 10 ms
+Read 1 MB sequentially from the network	10,000,000 ns = 10 ms
+Read 1 MB sequentially from disk	30,000,000 ns = 30 ms
+Send packet CA (California) ->Netherlands->CA	
+
+* Memory is fast but the disk is slow.
+* Avoid disk seeks if possible.
+* Simple compression algorithms are fast.
+* Compress data before sending it over the internet if possible.
+* Data centers are usually in different regions, and it takes time to send data between them.
+
+
+Requests per second
+
+Writes per day
+
+Writes to Read
+
+Write Req/s
+Read Req/s
+
+
+

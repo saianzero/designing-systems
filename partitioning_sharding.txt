@@ -1,0 +1,119 @@
+Data Partitioning & Sharding
+
+
+Partitioning = splitting data into smaller logical pieces.
+Sharding = partitioning data across multiple machines/servers.
+
+* Horizontal partitioning (row based)
+
+    * Range based sharding.
+    * Put different rows into different tables.
+    * Con
+        * If the value whose range is used for sharding isn’t chosen carefully, the partitioning scheme will lead to unbalanced servers.
+
+The problem is uneven distribution of data across servers.
+Example: suppose we shard users by user_id ranges:
+* Server A: 1–1,000,000
+* Server B: 1,000,001–2,000,000
+* Server C: 2,000,001–3,000,000
+
+SAY WE HAVE 1M users.
+If most users have IDs in the first range, Server A might contain 900k users, while B and C have only 50k each.
+So:
+* Server A → overloaded (900k)
+* Server B → mostly idle (50k)
+* Server C → mostly idle (50k)
+That's why choosing the sharding key/range carefully matters: you want the data and traffic to be distributed roughly evenly.
+
+
+
+
+* Vertical partitioning (column based)
+
+    * Divide data for a specific feature to their own server.
+    * Pro
+        * Straightforward to implement.
+        * Low impact on the application.
+    * Con
+        * To support growth of the application, a database may need further partitioning.
+
+
+* Directory-based partitioning
+    * A lookup service that knows the partitioning scheme and abstracts it away from the database access code.
+    * Allow addition of db servers or change of partitioning schema without impacting application.
+    * Con
+        * Can be a single point of failure.
+
+Directory-based partitioning means having a separate lookup service that tells your application which database server contains a particular piece of data:
+
+Application
+    ↓ ask directory service
+Directory Service  
+    ↓ user_id 123 in DB Server 2
+DB Server 2
+
+
+
+Partitioning criteria
+
+* Key or hash-based partitioning
+    * Apply a hash function to some key attribute of the entry to get the partition number.
+    * Problem
+        * Adding new servers may require changing the hash function, which would need redistribution of data and downtime for the service.
+        * Workaround: consistent hashing
+* List partitioning
+    * Each partition is assigned a list of values.
+
+Instead of calculating the partition from the key, you explicitly define which values belong to which partition.
+Example: suppose you have users and want to partition by country:
+
+
+Partition 1 → ["India", "Nepal", "Sri Lanka"]
+Partition 2 → ["USA", "Canada", "Mexico"]
+Partition 3 → ["UK", "France", "Germany"]
+
+So:
+
+User(country="India")  → Partition 1
+User(country="USA")    → Partition 2
+User(country="Germany") → Partition 3
+
+The database has a mapping/list that says:
+
+value → partition
+
+* Round-robin partitioning
+    * With n partitions, the i tuple is assigned to partition i % n.
+* Composite partitioning
+    * Combine any of above partitioning schemes to devise a new scheme.
+    * Consistent hashing is a composite of hash and list partitioning.
+        * Key -> reduced key space through hash -> list -> partition.
+
+
+Common problems of sharding
+
+Most of the constraints are due to the fact that operations across multiple tables or multiple rows in the same table will no longer run on the same server.
+
+* Joins and denormalization
+    * Joins will not be performance efficient since data has to be compiled from multiple servers.
+    * Workaround: denormalize the database so that queries can be performed from a single table. But this can lead to data inconsistency.
+* Referential integrity
+    * Difficult to enforce data integrity constraints (e.g. foreign keys).
+    * Workaround
+        * Referential integrity is enforced by application code.
+        * Applications can run SQL jobs to clean up dangling references.
+* Rebalancing
+    * Necessity of rebalancing
+        * Data distribution is not uniform.
+        * A lot of load on one shard.
+    * Create more db shards or rebalance existing shards changes partitioning scheme and requires data movement.
+
+
+
+
+
+
+
+
+
+

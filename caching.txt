@@ -1,0 +1,138 @@
+Caching
+
+
+Key principle: Recently requested data is likely to be requested again.
+
+- Application Server Cache
+- Distributed Cache (consistent hashing)
+- Global Cache
+    - Think Redis
+    * A server or file store that is faster than original store, and accessible by all request layer nodes.
+- Content distribution Networks (CDN)
+    * For sites serving large amounts of static media.
+    * Process
+        * A request first asks the CDN for the reqd. static media.
+        * CDN serves that content if it has it locally available.
+        * If content isn’t available, CDN will query back-end servers for the file, cache it locally and serve it to the requesting user.
+    * CDN not required from Day 0-
+            * Run a small Nginx server specifically to serve static files, instead of making your application server (FastAPI, Node, etc.) handle those files.
+				
+media.example.com
+       ↓
+     Nginx   (is primarily acting as a web server/static file server)
+       ↓
+/var/www/media/
+   ├── logo.png
+   ├── photo.jpg
+   └── video.mp4
+
+Later when CDN actually reqd.:
+
+media.example.com
+       │
+       ▼
+CDN
+       │
+       ▼
+Origin server
+
+
+The URL doesn't change.
+The only thing that changed is what media.example.com points to.
+
+
+
+- Caching Strategies
+
+Cache = Redis
+Permanent storage = PostgreSQL
+
+1. Write-through
+
+
+Application
+    │
+    |──→ Redis
+    │
+    |──→ PostgreSQL
+
+Every write updates both immediately.
+
+Benefit: Cache is always up to date.Cost: Every write has to wait for both systems → higher write latency.
+
+
+
+2. Write-around
+
+Application
+    │
+    |──→ PostgreSQL
+
+Redis is NOT updated
+
+New data goes directly to permanent storage.
+
+
+First read → Cache miss → PostgreSQL → put result in Redis
+Second read → Redis 
+
+Benefit: Don't fill Redis with data that may never be read.
+Cost: Recently written data has a cache miss on its first read.
+
+
+
+3. Write-back
+
+Application
+    │
+   ↓
+  Redis
+    │
+    │ 
+    |    (later)
+   ↓
+PostgreSQL
+
+The application considers the write complete once Redis is updated. 
+Redis eventually persists the change to PostgreSQL.
+
+Benefit: Very fast writes because you don't wait for PostgreSQL.
+Cost: If Redis/data-processing layer dies before the data is persisted, you can lose the write.
+
+
+Easy way to remember
+Strategy	Write goes to	Speed	Data-loss risk
+Write-through	Cache + DB	Slower	Low
+Write-around	DB only	Medium	Low
+Write-back	Cache first	Fastest	Higher
+
+The important distinction is when the permanent storage gets updated: immediately (through),
+directly without cache (around), or later (back).
+
+
+- Cache Eviction Policies:
+    * FIFO: first in first out
+    * LIFO: last in first out
+    * LRU: least recently used
+    * MRU: most recently used
+    * LFU: least frequently used
+    * RR: random replacement
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

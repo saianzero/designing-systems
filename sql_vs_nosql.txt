@@ -1,0 +1,119 @@
+SQL vs NoSQL
+
+
+Common types of NoSQL
+
+Key-value stores
+* Array of key-value pairs. The "key" is an attribute name.
+* Redis, Vodemort, Dynamo.
+
+Document databases
+* Data is stored in documents.
+* Documents are grouped in collections.
+* Each document can have an entirely different structure.
+* CouchDB, MongoDB.
+
+Wide-column / columnar databases
+* Column families - collection of related rows.
+* No need to know all the columns up front.
+* Each row can have different number of columns.
+* Cassandra, HBase.
+
+Graph database
+* Data is stored in graph structures
+    * Nodes: entities
+    * Properties: information about the entities
+    * Lines: connections between the entities
+* Neo4J, InfiniteGraph
+
+
+Differences between SQL and NoSQL
+
+Storage
+* SQL: store data in tables.
+* NoSQL: have different data storage models.
+
+Schema
+* SQL
+    * Each record conforms to a fixed schema.
+    * Schema can be altered, but it requires modifying the whole database.
+* NoSQL:
+    * Schemas are dynamic.
+
+Querying
+* SQL
+    * Use SQL (structured query language) for defining and manipulating the data.
+* NoSQL
+    * Queries are focused on a collection of documents.
+    * UnQL (unstructured query language).
+    * Different databases have different syntax.
+
+Scalability
+
+* SQL
+    * Vertically scalable (by increasing the horsepower: memory, CPU, etc) and expensive.
+    * Horizontally scalable (across multiple servers); but it can be challenging and time-consuming.
+* NoSQL
+    * Vertically scalable
+    * Horizontablly scalable (by adding more servers) and cheap.
+
+
+ACID
+
+ACID describes the guarantees a database transaction provides:
+
+Atomicity → All or nothing. If one part fails, the entire transaction is rolled back.
+Consistency → The database moves from one valid state to another valid state, respecting constraints.
+Isolation → Concurrent transactions don't interfere with each other in a way that produces invalid results.
+Durability → Once a transaction is committed, the data survives crashes/restarts.
+
+Example: Transferring ₹100 from A to B:
+Subtract ₹100 from A.
+Add ₹100 to B.
+Both happen, or neither happens → Atomicity.
+
+Balances remain valid → Consistency.
+
+Another transaction doesn't see a half-completed transfer → Isolation.
+
+After commit, the transfer isn't lost if the DB crashes → Durability.
+
+
+
+BASE is a design philosophy commonly used in distributed/NoSQL systems where availability and scalability are prioritized over immediate consistency.
+
+BASE =
+* Basically Available → the system generally responds, even during failures.
+* Soft state → data may change over time even without new user input, because replicas are synchronizing.
+* Eventually consistent → if no new updates occur, all replicas will eventually converge to the same value.
+
+Example: In a distributed database, you update your profile name, but one replica may temporarily still return the old name; eventually all replicas see the new name.
+
+Think: ACID → strong consistency; BASE → eventual consistency (as a rough mental model).
+
+
+* SQL
+    * ACID compliant
+    * Data reliability
+    * Gaurantee of transactions
+* NoSQL
+    * Most sacrifice ACID compliance for performance and scalability.
+		MongoDB → supports ACID transactions.
+		DynamoDB → supports ACID transactions.
+		Redis → has atomic operations, but isn't a traditional ACID transactional database.
+
+
+Which one to use?
+
+SQL
+* Ensure ACID compliance.
+    * Reduce anomalies.
+    * Protect database integrity.
+* Data is structured and unchanging.
+
+NoSQL
+* Data has little or no structure.
+* Make the most of cloud computing and storage.
+    * Cloud-based storage requires data to be easily spread across multiple servers to scale up.
+* Rapid development.
+    * Frequent updates to the data structure.

@@ -1,0 +1,135 @@
+Designing a Rate Limiter
+A rate limiter limits the number of client requests allowed to be sent over a specified period. If the API request count exceeds the threshold defined by the rate limiter, all the excess calls are blocked.
+
+429 - Too Many Requests
+
+Requirements
+* Accurately limit excessive requests.
+* Low latency. The rate limiter should not slow down HTTP response time.
+* Use as low memory as possible.
+* Distributed rate limiting. The rate limiter can be shared across multiple servers or processes.
+* Exception handling. Show clear exceptions to users when their requests are throttled.
+* High fault tolerance. If there are any problems with the rate limiter (for example, a cache server goes offline), it does not affect the entire system.
+
+
+Client is an unreliable place to enforce rate limiting because client requests can easily be forged by malicious actors. Moreover, we might not have control over the client implementation.
+
+Server-side / rate limiting middleware / API GW (for micro-service architecture.
+
+When you implement everything on the server-side, you have full control of the algorithm. 
+However, your choice might be limited if you use a third-party gateway.
+
+Kong API Gateway uses Fixed Window and Sliding Window rate limiting algorithms.
+(Fixed Window is performant but window edges bug)
+
+
+Algorithms:
+1. Token bucket
+2. Leaking bucket
+3. Fixed window counter
+4. Sliding window log
+5. Sliding window counter
+
+
+Token bucket (Amazon, Stripe):
+
+(Memory efficient, Simple Implementation, 
+Burst traffic allowed for short periods if tokens are available - Handles legitimate traffic spikes better)
+
+* A token bucket is a container that has pre-defined capacity. 
+* Tokens are refilled in the bucket at preset rates periodically.
+* Once the bucket is full:
+    * no more tokens are refilled.
+    *  extra tokens will overflow.
+
+* 1 request - 1 token
+* Parameters to tweak: (con)
+    * Bucket size
+    * refill rate (per sec/min)
+* Design choices:
+    * It is usually necessary to have different buckets for different API endpoints.
+    * If we need to throttle requests based on IP addresses, each IP address requires a bucket.
+    * Global bucket if large number of requests are allowed (10k requests per second)
+
+
+Leaky bucket (API gateways, expensive downstream operations - DB, etc.):
+
+(Memory efficient, Fixed rate of processing - stable outflow
+Same as token bucket, except that requests are processed at a fixed rate (i.e. not flexible for traffic bursts, smoothed out)
+
+It is usually implemented with a first-in-first-out (FIFO) queue. The algorithm works as follows:
+* When a request arrives, the system checks if the queue is full. 
+    * If it is not full, the request is added to the queue.
+* Otherwise, the request is dropped.
+* Requests are pulled from the queue and processed at regular intervals.
+
+* Parameters to tweak: (Con)
+    * Bucket size: Same as queue size; Hold waiting requests (eg: 100 reqs)
+    * Outflow rate: Processing speed (eg: 10 req/s)
+
+
+Fixed Counter (Kong, cheap and fast implementations)
+
+(Memory efficient, easy implementation, worst spike problems)
+
+* The algorithm divides the timeline into fix-sized time windows and assign a counter for each window.
+* Each request increments the counter by one.
+* Once the counter reaches the pre-defined threshold, new requests are dropped until a new time window starts.
+
+Eg: 
+The time unit is 1 second.
+Allowed: maximum of 3 requests per second. 
+In each second window, if more than 3 requests are received, extra requests are dropped.
+
+A major problem with this algorithm is that a burst of traffic at the edges of time windows could cause more requests than allowed quota to go through.
+
+Fix to this burst problem: Sliding window log algorithm - Very accurate because rolling window, but memory expensive
+
+Hybrid approach- Sliding window counter algorithm - smoothens traffic spikes, memory efficient (because no storing logs)
+Requests in current window + requests in the previous window * overlap percentage of the rolling window and previous window
+
+
+HIGH LEVEL ARCHITECTURE:
+
+At the high-level, we need a counter to keep track of how many requests are sent from the same user, IP address, etc. 
+If the counter is larger than the limit, the request is disallowed.
+
+Using the database is not a good idea due to slowness of disk access. 
+In-memory cache is chosen because it is fast and supports time-based expiration strategy. 
+For instance, Redis is an in-memory store that offers two commands: INCR and EXPIRE.
+* INCR: It increases the stored counter by 1.
+* EXPIRE: It sets a timeout for the counter. If the timeout expires, the counter is automatically deleted.
+
+domain: auth
+descriptors:
+  - key: auth_type
+    value: login
+    rate_limit:
+      unit: min
+      requests_per_unit: 5
+
+
+The rate limiter returns the following HTTP headers to clients:
+X-Ratelimit-Remaining: The remaining number of allowed requests within the window.
+
+X-Ratelimit-Limit: It indicates how many calls the client can make per time window.
+
+X-Ratelimit-Retry-After: The number of seconds to wait until you can make a request again without being throttled.
+When a user has sent too many requests, a 429 too many requests error and X-Ratelimit-Retry-After header are returned to the client.
+
+Rate limiter in a distributed environment (Multiple rate limiters/ Multiple services)
+1.  Race Conditions
+        1. Use lua scripts (Run multiple operations as a single atomic operations on redis)
+2. Synchronization issue
+    1. Use distributed redis
+3. Multiple data centres for low latency
+4. Eventual consistency
+
+
+
+
+
+
+
+
+

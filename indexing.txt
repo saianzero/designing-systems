@@ -1,0 +1,64 @@
+Indexing
+
+
+
+An index is a data structure that helps a database find rows faster without scanning the entire table.
+
+* Improve the performance of search queries.
+* Decrease the write performance. This performance degradation applies to all insert, update, and delete operations.
+
+
+Without an index:
+
+SELECT * FROM users WHERE email = 'a@gmail.com';
+If users has 10 million rows, the database may have to check:
+
+
+row 1 → row 2 → row 3 → ... → row 10,000,000
+
+That's a full table scan → roughly O(n).
+
+
+With an index:
+
+Create:
+
+CREATE INDEX idx_users_email ON users(email);
+
+Now the database maintains a separate structure roughly like:
+
+
+email                  → row location
+--------------------------------------
+a@gmail.com            → row 58321
+b@gmail.com            → row 91234
+c@gmail.com            → row 12456
+...
+
+Typically this is implemented using a B-tree, allowing efficient lookup in roughly O(log n).
+
+So:
+
+WHERE email = 'a@gmail.com'
+can find the relevant row much faster.
+
+The trade-off
+Indexes aren't free:
+* Reads → faster
+* Writes → slower, because the index also has to be updated
+* Storage → more, because indexes consume disk/RAM
+
+So you generally index columns that are frequently used for:
+WHERE
+JOIN
+ORDER BY
+GROUP BY
+For example:
+users(id, email, name, age)
+
+INDEX(email)
+means queries filtering by email can be fast, while queries like:
+WHERE name = 'John'
+don't benefit from that index.
+
+
